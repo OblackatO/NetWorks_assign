@@ -13,6 +13,7 @@ public abstract class MobileItem extends AquariumItem implements Mobile {
 
     int MAX_WIDTH;
     int MIN_WIDTH;
+    final int SPEED = 3;
 
     //Image to fish
     private static URL u = ClassLoader.getSystemResource("Images/fish.png");
@@ -36,19 +37,28 @@ public abstract class MobileItem extends AquariumItem implements Mobile {
          *  the time of an analog clock to its pointers position.
          */
 
-        int direction_coordinate_x = destination.x - super.position.y;
-        int direction_coordinate_y = destination.y - super.position.x;
+        int direction_coordinate_x = destination.x - super.position.x;
+        int direction_coordinate_y = destination.y - super.position.y;
 
         double direction = (double) Math.atan2(direction_coordinate_x, direction_coordinate_y);
 
         double width_arg = this.MAX_WIDTH/super.width;
-        double speed = 4.0+width_arg;
+        double speed = 3*width_arg;
 
         int cor_x = (int) (speed * Math.cos(direction));
         int cor_y = (int) (speed * Math.sin(direction));
         Point p = this.position;
         p.translate(cor_x, cor_y);
-        setPosition(p);
+        boolean stays_in_aquarium = ((p.getX()) >= 0) &&
+                ((p.getX()) <= Aquarium.getcoordinateX() - this.width) &&
+                ((p.getY()) >= 0) &&
+                ((p.getY()) <= Aquarium.getcoordinateY() - this.height);
+
+        if(stays_in_aquarium){
+
+            setPosition(p);
+        }
+
         return false; // false si on est arrivé à destination
     }
 

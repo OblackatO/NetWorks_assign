@@ -4,6 +4,7 @@ import Aquarium.Utilities.RandomNumber;
 
 import java.awt.*;
 import java.util.Collection;
+import java.util.UUID;
 
 public abstract class AquariumItem {
 
@@ -11,6 +12,9 @@ public abstract class AquariumItem {
     protected int width;
     protected int height;
     Image image;
+
+    UUID uuid = UUID.randomUUID();
+    String ItemID = uuid.toString();
 
     public AquariumItem(int min_width, int max_width, Image image){
         /**
@@ -57,6 +61,18 @@ public abstract class AquariumItem {
             }
         }
         return false;
+    }
+
+    public int getWidth(){
+        return this.width;
+    }
+
+    public int getHeight(){
+        return this.height;
+    }
+
+    public String getItemID(){
+        return this.ItemID;
     }
 
     public abstract int getMinWidth();

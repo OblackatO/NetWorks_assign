@@ -15,6 +15,7 @@ public class Time extends Thread{
     public void run() {
         while(true) {
             this.aquarium.go();
+
         }
     }
 }

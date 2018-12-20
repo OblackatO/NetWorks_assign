@@ -4,7 +4,6 @@ import Aquarium.Items.*;
 import Aquarium.Utilities.RandomNumber;
 import Aquarium.Utilities.Time;
 import Networking.UDPClient;
-import Networking.UDPServer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -14,12 +13,12 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class Aquarium extends JPanel {
+public class Aquarium extends JPanel implements Runnable {
 
     Collection<AquariumItem> items;
     final private int NB_STONES = 20;
     final private int NB_SEAWEED = 15;
-    final private int NB_FISHES = 10;
+    final private int NB_FISHES = 5;
 
     Time threadX;
 
@@ -37,7 +36,7 @@ public class Aquarium extends JPanel {
 
         //Init UDP client
         try {
-            this.aquarium_client = new UDPClient(0, Start.SERVER_IP);
+            this.aquarium_client = new UDPClient(8080, Start.SERVER_IP);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         } catch (SocketException e) {
@@ -45,6 +44,8 @@ public class Aquarium extends JPanel {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
+
+        this.aquarium_client.start();
 
         this.items = new ArrayList<AquariumItem>();
         this.setBackground(Color.BLUE);
@@ -123,16 +124,18 @@ public class Aquarium extends JPanel {
 
         for(AquariumItem item: this.items){
             if(item instanceof MobileItem) {
-                Point random_point = RandomNumber.randomPoint(0, Aquarium.X_Coordinate
-                        - 20, 0, Aquarium.Y_Coordinate - 20);
+                Point random_point = RandomNumber.randomPoint(0, Aquarium.getcoordinateX()
+                        - item.getWidth(), 0, Aquarium.getcoordinateY() - item.getHeight());
 
                 MobileItem m_item = (MobileItem) item;
                 m_item.move(random_point);
+                //queueBuffer(item);
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
                     System.out.println("Program was interrupted.");
                 }
+
             }
 
         }
@@ -169,5 +172,18 @@ public class Aquarium extends JPanel {
      */
     public static int getcoordinateY() {
         return Aquarium.Y_Coordinate;
+    }
+
+    @Override
+    public void run() {
+        try {
+            this.aquarium_client = new UDPClient(8080, Start.SERVER_IP);
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
     }
 }

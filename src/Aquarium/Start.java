@@ -6,13 +6,13 @@ import java.net.UnknownHostException;
 
 public class Start {
 
-    public static String SERVER_IP = "127.0.0.1";
+    public static String SERVER_IP ;
 
     public static void main(String [] args){
 
         //Init Server
         try {
-            UDPServer server = new UDPServer(0,Start.SERVER_IP);
+            UDPServer server = new UDPServer(8080,Start.SERVER_IP);
             server.start();
         } catch (UnknownHostException e) {
             System.out.println("[>]An error occurred while init the server.");

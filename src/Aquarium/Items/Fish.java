@@ -1,6 +1,8 @@
 package Aquarium.Items;
 
 
+import java.util.UUID;
+
 public class Fish extends MobileItem{
 
     final static int MIN_FISH_WIDTH = 200;

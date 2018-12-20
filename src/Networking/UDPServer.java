@@ -10,14 +10,7 @@ public class UDPServer extends Thread {
      * order to handle requests
      */
 
-    int port;
-    InetAddress ip_address;
-
     DatagramSocket server;
-    DatagramPacket packet = null;
-
-    //input and output streams
-    byte[] buffer=new byte[256];
     String outMessage=null;
     String inMessage=null;
 
@@ -25,45 +18,50 @@ public class UDPServer extends Thread {
 
         //Defines default port if needed.
         if(port == 0){
-            this.port = 8080;
+            port = 8080;
         }else{
-            this.port = port;
+            port = port;
         }
 
         //Defines default ip address to bind to(loop back interface)
+        InetAddress ip_net_address;
         if(ip_address == null){
-            InetAddress.getByName("127.0.0.1");
+            ip_net_address = InetAddress.getByName("127.0.0.1");
         }else{
-            InetAddress.getByName(ip_address);
+            ip_net_address = InetAddress.getByName(ip_address);
         }
 
         try {
-            this.server = new DatagramSocket(this.port, this.ip_address);
+            this.server = new DatagramSocket(port, ip_net_address);
             System.out.println("[>]Server is up and running.");
+            System.out.println("Server Ip address:"+this.server.getLocalAddress());
+            System.out.println("Server port:"+this.server.getLocalPort());
         } catch (SocketException e) {
             System.out.println("[>]An error occured while creating the server.");
             e.printStackTrace();
         }
-
     }
 
     public void DissectMessage() throws IOException {
-        this.packet = new DatagramPacket(this.buffer, this.buffer.length);
-        this.server.receive(this.packet);
-        String message = new String(packet.getData(),0,this.buffer.length, "UTF-8");
+        byte[] buffer=new byte[512];
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        this.server.receive(packet);
+        String message = new String(packet.getData(),0,buffer.length, "UTF-8");
+        InetAddress client_ip = packet.getAddress();
+        int client_port = packet.getPort();
         if (message.contains(Requests.HELO_REQUEST.toString())) { //Aquarium Server
-            this.HandleHELORequest();
+            this.HandleHELORequest(client_ip, client_port);
         }
     }
 
-    private void HandleHELORequest(){
+    private void HandleHELORequest(InetAddress client_ip, int port){
         System.out.println("[>]A new aquarium is up and running.");
-        System.out.println("[>]Its IP address:"+this.packet.getAddress().toString());
+        System.out.println("[>]Its IP address:"+client_ip.toString());
 
-        InetAddress address = this.packet.getAddress();
-        int rep_port = this.packet.getPort();
-        this.buffer = ResponseCodes.OK_CODE.toString().getBytes();
-        this.packet = new DatagramPacket(this.buffer, this.buffer.length, address, rep_port);
+        byte[] buffer;
+        DatagramPacket packet;
+        buffer = ResponseCodes.OK_CODE.toString().getBytes();
+        packet = new DatagramPacket(buffer, buffer.length, client_ip, port);
         try {
             this.server.send(packet);
         } catch (IOException e) {
