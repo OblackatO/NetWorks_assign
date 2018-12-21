@@ -59,7 +59,6 @@ public class UDPServer extends Thread {
          */
         byte[] buffer=new byte[512];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
-        System.out.println("Waiting for packet.");
         this.server.receive(packet);
         String message = new String(packet.getData(),0,buffer.length);
         InetAddress client_ip = packet.getAddress();
@@ -85,7 +84,7 @@ public class UDPServer extends Thread {
             });
             thread1.start();
 
-        }else if(message.contains(Requests.GETPOSITIONS_REQUEST.toString())){
+        }else if(message.contains(Requests.POSITIONS_REQUEST.toString())){
 
             Thread thread1 = new Thread(new Runnable() {
                 @Override
@@ -100,7 +99,7 @@ public class UDPServer extends Thread {
             Thread thread1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    HandleDISSOCIATIONRequest(client_ip, client_port);
+                    HandleDISCONNECTRequest(client_ip, client_port);
                 }
             });
             thread1.start();
@@ -167,7 +166,7 @@ public class UDPServer extends Thread {
         }
     }
 
-    private void HandleDISSOCIATIONRequest(InetAddress client_ip, int port){
+    private void HandleDISCONNECTRequest(InetAddress client_ip, int port){
         /**
          * Handles dissociation request, and tells others clients that some
          * client is going to be disconnected.
@@ -217,7 +216,7 @@ public class UDPServer extends Thread {
          */
         while (true) {
             try {
-                System.out.println("Waiting for messages...");
+                //System.out.println("Waiting for messages...");
                 this.DissectMessage();
             } catch (IOException e) {
                 e.printStackTrace();

@@ -13,7 +13,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class Aquarium extends JPanel implements Runnable {
+public class Aquarium extends JPanel{
 
     Collection<AquariumItem> items;
     final private int NB_STONES = 20;
@@ -30,22 +30,23 @@ public class Aquarium extends JPanel implements Runnable {
     private Graphics gContext;
 
     //UDPClient
-    UDPClient aquarium_client;
+    private UDPClient aquarium_client;
 
     public Aquarium(){
 
-        //Init UDP client
-        try {
-            this.aquarium_client = new UDPClient(8080, Start.SERVER_IP);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        this.aquarium_client.start();
+        Thread UDPClient_thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    aquarium_client = new UDPClient(Start.SERVER_PORT, Start.SERVER_IP);
+                } catch (UnknownHostException e) {
+                    e.printStackTrace();
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        UDPClient_thread.start();
 
         this.items = new ArrayList<AquariumItem>();
         this.setBackground(Color.BLUE);
@@ -174,16 +175,6 @@ public class Aquarium extends JPanel implements Runnable {
         return Aquarium.Y_Coordinate;
     }
 
-    @Override
-    public void run() {
-        try {
-            this.aquarium_client = new UDPClient(8080, Start.SERVER_IP);
-        } catch (UnknownHostException e) {
-            e.printStackTrace();
-        } catch (SocketException e) {
-            e.printStackTrace();
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-    }
+    public UDPClient getUDPClient(){ return this.aquarium_client; }
+
 }
