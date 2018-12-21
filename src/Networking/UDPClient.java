@@ -101,8 +101,6 @@ public class UDPClient extends Thread{
         }
     }
 
-    //private void
-
     private String RequestHandler(byte[] buffer) throws UnsupportedEncodingException {
         /**Sends Discovery Requests to check if the
          * server is up and running.
