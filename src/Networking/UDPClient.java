@@ -18,6 +18,7 @@ public class UDPClient extends Thread{
     int server_port;
     InetAddress serverIP;
     DatagramSocket client;
+    boolean isassociated = false;
 
     UUID uuid = UUID.randomUUID();
     String clientID = uuid.toString();
@@ -67,11 +68,13 @@ public class UDPClient extends Thread{
     }
 
     private void ASSOCIATIONRequest() {
-        byte[] buffer = this.ConvertRequests(Requests.ASSOCIATION_REQUEST);
-        String message = null;
-        boolean isassociated = false;
+        String message = Requests.ASSOCIATION_REQUEST.toString()+this.TOKEN;
+        message += this.clientID+this.TOKEN;
 
-        while (!(isassociated)) {
+        byte[] buffer = message.getBytes();
+
+
+        while (!(this.isassociated)) {
 
             message = this.RequestHandler(buffer);
 
@@ -84,11 +87,14 @@ public class UDPClient extends Thread{
                     e.printStackTrace();
                 }
             }else{
-                isassociated = true;
+                this.isassociated = true;
             }
 
         }
     }
+
+
+    //TODO Shouldn't send and recieve in the same method
 
     public boolean DISCONNECTRequest(){
         /**
@@ -110,7 +116,7 @@ public class UDPClient extends Thread{
         //Tries to send message
         sendDatagram(packet);
         System.out.println("Trying to receive message.");
-        packet = recieveDatagram();
+        packet = receiveDatagram();
         String message = null;
         try {
             message = new String(packet.getData(), 0, packet.getLength(), "UTF-8");
@@ -122,7 +128,7 @@ public class UDPClient extends Thread{
         return message;
     }
 
-    protected void sendDatagram(DatagramPacket packet){
+    private void sendDatagram(DatagramPacket packet){
         //Tries to send packet
         try {
             this.client.send(packet);
@@ -131,7 +137,7 @@ public class UDPClient extends Thread{
         }
     }
 
-    protected DatagramPacket recieveDatagram(){
+    private DatagramPacket receiveDatagram(){
         //Tries to send packet
         byte[] buffer = new byte[512];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -151,12 +157,80 @@ public class UDPClient extends Thread{
         return request.toString().getBytes();
     }
 
-    private void SendFish(){
-        sendDatagram(dataBuffer[out]);
-        out = (++out) % this.BUFFER_MAX;
+    /*
+    All methods handling received messages come here
+     */
+
+    /**Reads all datagrams recieved by the client.
+     * It then checks for the kind of message received and calls the handler for that message
+     */
+    private void messageHandler(){
+        DatagramPacket packet = receiveDatagram();
+
+        //Only process packets recieved from the server
+        if(packet.getAddress() == serverIP) {
+            String message = null;
+            Thread thread = null;
+            try {
+                message = new String(packet.getData(), 0, packet.getLength(), "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            if (message.contains(Requests.POSITIONS_REQUEST.toString())) {
+
+                thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO handle positions requests
+                    }
+                });
+            }else if (message.contains(ResponseCodes.DISCONNECTED.toString())) {
+
+                thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO handle disconnected responses
+                    }
+                });
+            }else if (message.contains(Requests.DISCONNECT_REQUEST.toString())) {
+
+                thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //TODO handle disconnected request ???
+                    }
+                });
+            }
+
+            thread.start();
+
+        }
+
     }
 
-    public void queueBuffer(AquariumItem item) {
+
+    /*
+    All methods handling sent messages come here
+     */
+    public void sendFish(AquariumItem item){
+        String message;
+
+        message = Requests.POSITIONS_REQUEST.toString()+this.TOKEN;
+        message += this.clientID+this.TOKEN;
+        message += item.getItemID()+this.TOKEN;
+        message += item.getPosition().x+this.TOKEN;
+        message += item.getPosition().y+this.TOKEN;
+
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
+                this.serverIP,
+                this.server_port);
+        sendDatagram(packet);
+    }
+
+
+
+/*    public void queueBuffer(AquariumItem item) {
 
         String message;
 
@@ -173,13 +247,16 @@ public class UDPClient extends Thread{
                 this.server_port);
         in = (++in) % this.BUFFER_MAX;
 
-    }
+    }*/
 
 
     @Override
     public void run() {
         HELORequest(); //Checks if server is ready to communicate
         ASSOCIATIONRequest(); //Sends association request to server
+        while(this.isassociated) {
+            messageHandler();
+        }
 
     }
 
