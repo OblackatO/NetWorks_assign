@@ -2,6 +2,7 @@ package Networking;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +16,7 @@ public class UDPServer extends Thread {
     final String TOKEN = "|";
     final int MAX_CLIENTS = 7;
     int CURRENT_CLIENTS = 0;
+    Map<InetAddress, String> clients_IDs;
     Map<InetAddress, Integer> clients_map;
     Map<InetAddress, Integer> alive_clients;
     DatagramSocket server;
@@ -78,11 +80,11 @@ public class UDPServer extends Thread {
             thread1.start();
 
         }else if(message.contains(Requests.ASSOCIATION_REQUEST.toString())){
-
+            String[] message_splitted = message.split(this.TOKEN);
             Thread thread1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    HandleASSOCIATIONRequest(client_ip, client_port);
+                    HandleASSOCIATIONRequest(message_splitted[1], client_ip, client_port);
                 }
             });
             thread1.start();
@@ -129,7 +131,7 @@ public class UDPServer extends Thread {
 
     };
 
-    private void HandleASSOCIATIONRequest(InetAddress client_ip, int port){
+    private void HandleASSOCIATIONRequest(String clientID, InetAddress client_ip, int port){
         /**
          * Handles ASSOCIATION_request from the client. If the number of maximum clients that
          * can be connected to the server has been reached, a CANNOT_ASSOCIATE
@@ -145,6 +147,7 @@ public class UDPServer extends Thread {
             if(!(this.clients_map.containsKey(client_ip))){
                 this.clients_map.put(client_ip, port);
                 this.alive_clients.put(client_ip,0);
+                this.clients_IDs.put(client_ip, clientID);
             }
             buffer = ResponseCodes.CAN_ASSOCIATE.toString().getBytes();
         }
@@ -183,6 +186,7 @@ public class UDPServer extends Thread {
         this.SendMessage(packet);
 
         String message = client_ip.toString() + this.TOKEN;
+        message += this.clients_IDs.get(client_ip) + this.TOKEN;
         message += ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
 
         buffer = message.getBytes();
