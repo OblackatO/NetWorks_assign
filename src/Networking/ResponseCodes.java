@@ -4,5 +4,7 @@ public enum ResponseCodes {
 
     OK_CODE,
     CAN_ASSOCIATE,
-    CANNOT_ASSOCIATE;
+    CANNOT_ASSOCIATE,
+    CAN_DISCONNECT,
+    DISCONNECTED;
 }

@@ -30,7 +30,7 @@ public class UDPClient extends Thread{
     int out;
 
 
-    public UDPClient(int port, String ServerIP) throws UnknownHostException, SocketException, UnsupportedEncodingException {
+    public UDPClient(int port, String ServerIP) throws UnknownHostException, SocketException{
 
         if(port == 0){
             this.server_port = 8080;
@@ -45,6 +45,8 @@ public class UDPClient extends Thread{
         in = 0;
         out = 0;
 
+        this.start();
+
     }
 
     private void HELORequest() {
@@ -56,11 +58,7 @@ public class UDPClient extends Thread{
          */
         byte[] buffer= this.ConvertRequests(Requests.HELO_REQUEST);
         String message = null;
-        try {
-            message = this.RequestHandler(buffer);
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
+        message = this.RequestHandler(buffer);
         if(message.contains(ResponseCodes.OK_CODE.toString())){
             System.out.println("[>]Server successfully responded. Possible to send position information.");
         }else{
@@ -69,31 +67,22 @@ public class UDPClient extends Thread{
     }
 
     private void ASSOCIATIONRequest() {
-        /**Sends Discovery Requests to check if the
-         * server is up and running.
-         *
-         * @return false if the server is not up and running,
-         *         true otherwise.
-         */
         byte[] buffer = this.ConvertRequests(Requests.ASSOCIATION_REQUEST);
         String message = null;
         boolean isassociated = false;
 
         while (!(isassociated)) {
 
-            try {
-                message = this.RequestHandler(buffer);
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
+            message = this.RequestHandler(buffer);
 
             if (!(message.contains(ResponseCodes.CAN_ASSOCIATE.toString()))) {
                 System.out.println("[>]Server reached maximum number of connections");
+                System.out.println("[>]Trying again in a few seconds.");
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }    // return true;
+                }
             }else{
                 isassociated = true;
             }
@@ -101,15 +90,20 @@ public class UDPClient extends Thread{
         }
     }
 
-    //private void
-
-    private String RequestHandler(byte[] buffer) throws UnsupportedEncodingException {
-        /**Sends Discovery Requests to check if the
-         * server is up and running.
+    public boolean DISCONNECTRequest(){
+        /**
+         * Asks the server for a disconnection.
          *
-         * @return false if the server is not up and running,
-         *         true otherwise.
+         * @return true if disconnection successful, false otherwise.
          */
+
+        byte[] buffer = this.ConvertRequests(Requests.DISCONNECT_REQUEST);
+        String message = this.RequestHandler(buffer);
+        return message.contains(ResponseCodes.CAN_DISCONNECT.toString());
+
+    }
+
+    private String RequestHandler(byte[] buffer){
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
                 this.serverIP,
                 this.server_port);
@@ -117,8 +111,14 @@ public class UDPClient extends Thread{
         sendDatagram(packet);
         System.out.println("Trying to receive message.");
         packet = recieveDatagram();
-        String message;
-        message = new String(packet.getData(), 0, packet.getLength(), "UTF-8");
+        String message = null;
+        try {
+            message = new String(packet.getData(), 0, packet.getLength(), "UTF-8");
+            return message;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
         return message;
     }
 
@@ -144,7 +144,8 @@ public class UDPClient extends Thread{
     }
 
     private byte[] ConvertRequests(Requests request){
-        /**Converts an instance of Requests to bytes, so it can be
+        /**
+         * Converts an instance of Requests to bytes, so it can be
          * properly sent over UDP.
          */
         return request.toString().getBytes();
@@ -173,8 +174,6 @@ public class UDPClient extends Thread{
         in = (++in) % this.BUFFER_MAX;
 
     }
-
-
 
 
     @Override
