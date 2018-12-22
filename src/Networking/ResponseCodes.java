@@ -6,5 +6,6 @@ public enum ResponseCodes {
     CAN_ASSOCIATE,
     CANNOT_ASSOCIATE,
     CAN_DISCONNECT,
-    DISCONNECTED;
+    DISCONNECTED,
+    YES_ALIVE;
 }
