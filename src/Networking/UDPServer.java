@@ -2,9 +2,7 @@ package Networking;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 public class UDPServer extends Thread {
 
@@ -12,21 +10,20 @@ public class UDPServer extends Thread {
      * of each aquarium client. It opens one thread per each client, in
      * order to handle requests
      */
-    final String TOKEN = "|";
+    final String TOKEN = "@";
     final int MAX_CLIENTS = 7;
     int CURRENT_CLIENTS = 0;
-    ArrayList<Client> clients;
     DatagramSocket server;
 
-    //Several different threads might try to access this.clients
-    //This lock will avoid problems resulting in
-    //concurrent threads accessing this.clients, at the same time.
-    Lock server_lock = new ReentrantLock();
+    //The data type ConcurrentSkipListSet avoids problems resulting in
+    //concurrent threads accessing clients, at the same time. This behavior
+    // is needed here.
+    ConcurrentSkipListSet<Client> clients;
 
     public UDPServer(int port, String ip_address) throws UnknownHostException {
 
         //Inits arraylist that contains info about the clients.
-        this.clients = new ArrayList<Client>();
+        this.clients = new ConcurrentSkipListSet<Client>();
 
         //Defines default port if needed.
         if(port == 0){
@@ -65,7 +62,7 @@ public class UDPServer extends Thread {
         byte[] buffer=new byte[512];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         this.server.receive(packet);
-        String message = new String(packet.getData(),0,buffer.length);
+        String message = new String(packet.getData(), 0, packet.getLength());
         InetAddress client_ip = packet.getAddress();
         int client_port = packet.getPort();
 
@@ -80,7 +77,6 @@ public class UDPServer extends Thread {
             thread1.start();
 
         }else if(message.contains(Requests.ASSOCIATION_REQUEST.toString())){
-
             String[] message_splitted = message.split(this.TOKEN);
             Thread thread1 = new Thread(new Runnable() {
                 @Override
@@ -102,10 +98,11 @@ public class UDPServer extends Thread {
 
         }else if(message.contains(Requests.DISCONNECT_REQUEST.toString())){
 
+            String[] message_splitted = message.split(this.TOKEN);
             Thread thread1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    HandleDISCONNECTRequest(client_ip, client_port);
+                    HandleDISCONNECTRequest(client_ip, message_splitted[0], client_port);
                 }
             });
             thread1.start();
@@ -143,11 +140,10 @@ public class UDPServer extends Thread {
 
         }else{
 
-            if(!(Client.ALL_IDs.contains(clientID))){
+            if((Client.ALL_IDs == null) || !(Client.ALL_IDs.contains(clientID))){
+                System.out.println("This is the client ID:"+clientID);
                 Client new_client = new Client(client_ip, clientID, port);
-                this.server_lock.lock();
                 this.clients.add(new_client);
-                this.server_lock.unlock();
                 buffer = ResponseCodes.CAN_ASSOCIATE.toString().getBytes();
             }else{
                 byte[] message = "Already associated".getBytes();
@@ -165,7 +161,6 @@ public class UDPServer extends Thread {
          * except the one sending its own items' positions.
          */
 
-        this.server_lock.lock();
         for(Client client: this.clients){
 
             if(client.ip_address.toString().equals(client_ip.toString())){
@@ -178,10 +173,9 @@ public class UDPServer extends Thread {
 
             this.SendMessage(positions);
         }
-        this.server_lock.unlock();
     }
 
-    private void HandleDISCONNECTRequest(InetAddress client_ip, int port){
+    private void HandleDISCONNECTRequest(InetAddress client_ip, String clientID, int port){
         /**
          * Handles a dissociation request, and tells others clients that some
          * client is going to be disconnected.
@@ -191,15 +185,13 @@ public class UDPServer extends Thread {
         this.SendMessage(packet);
 
         Client client = null;
-        this.server_lock.lock();
         for(Client client_sec: this.clients){
-            if(client.ip_address.toString().equals(client_ip.toString())){
-                client = client_sec;
-                break;
+            if((client_sec.ip_address.toString().equals(client_ip.toString())) &&
+                client_sec.ID.equals(clientID)){
+                    client = client_sec;
+                    break;
             }
         }
-        this.server_lock.unlock();
-
         String message = client_ip.toString() + this.TOKEN;
         message += client.ID + this.TOKEN;
         message += ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
@@ -207,7 +199,6 @@ public class UDPServer extends Thread {
         buffer = message.getBytes();
         packet = new DatagramPacket(buffer, buffer.length);
 
-        this.server_lock.lock();
         for(Client client_sec: this.clients){
 
             if(client_sec.ip_address.toString().equals(client_ip.toString())){
@@ -222,7 +213,6 @@ public class UDPServer extends Thread {
 
         //removes client from the arraylist of clients
         this.clients.remove(client);
-        this.server_lock.unlock();
 
         this.CURRENT_CLIENTS--;
     }
@@ -251,7 +241,7 @@ public class UDPServer extends Thread {
                 e.printStackTrace();
             }
 
-            this.server_lock.lock();
+            System.out.println("Checking fishes..");
             for(Client client: this.clients){
                 /**
                  * If value of total_YESALIVE_ANSWERS is bigger than 3 that
@@ -271,7 +261,6 @@ public class UDPServer extends Thread {
                     this.SendMessage(packet);
                 }
             }
-            this.server_lock.unlock();
         }
     }
 
@@ -282,14 +271,12 @@ public class UDPServer extends Thread {
          * Please, see the method: IsClientAlive() for more details.
          */
 
-        this.server_lock.lock();
         for(Client client: this.clients){
             if(client.ip_address.toString().equals(client_ip.toString())){
                 client.total_YESALIVE_ANSWERS--;
                 break;
             }
         }
-        this.server_lock.unlock();
     }
 
     @Override

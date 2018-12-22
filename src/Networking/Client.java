@@ -3,7 +3,7 @@ package Networking;
 import java.net.InetAddress;
 import java.util.ArrayList;
 
-public class Client {
+public class Client implements Comparable<Client>{
     /**
      * Information needed to deal with a client.
      *
@@ -27,5 +27,10 @@ public class Client {
         if(Client.ALL_IDs == null){
             Client.ALL_IDs = new ArrayList<String>();
         }
+    }
+
+    @Override
+    public int compareTo(Client o) {
+        return this.ID.compareTo(o.ID);
     }
 }
