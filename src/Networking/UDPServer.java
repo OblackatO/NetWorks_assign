@@ -16,12 +16,14 @@ public class UDPServer extends Thread {
     final int MAX_CLIENTS = 7;
     int CURRENT_CLIENTS = 0;
     Map<InetAddress, Integer> clients_map;
+    Map<InetAddress, Integer> alive_clients;
     DatagramSocket server;
 
     public UDPServer(int port, String ip_address) throws UnknownHostException {
 
         //Inits map that contains info about the clients.
         this.clients_map = new HashMap<InetAddress, Integer>();
+        this.alive_clients = new HashMap<InetAddress, Integer>();
 
         //Defines default port if needed.
         if(port == 0){
@@ -43,6 +45,7 @@ public class UDPServer extends Thread {
             System.out.println("[>]Server is up and running.");
             System.out.println("Server Ip address:"+this.server.getLocalAddress());
             System.out.println("Server port:"+this.server.getLocalPort());
+            this.start();
         } catch (SocketException e) {
             System.out.println("[>]An error occurred while creating the server.");
             e.printStackTrace();
@@ -104,6 +107,9 @@ public class UDPServer extends Thread {
             });
             thread1.start();
 
+        }else if(message.contains(ResponseCodes.YES_ALIVE.toString())){
+            this.HandleYESALIVEResponse(client_ip);
+
         }else{
             System.out.println(String.format("Message: %s from client: %s not understood.", message, client_ip.toString()));
         }
@@ -138,6 +144,7 @@ public class UDPServer extends Thread {
         }else{
             if(!(this.clients_map.containsKey(client_ip))){
                 this.clients_map.put(client_ip, port);
+                this.alive_clients.put(client_ip,0);
             }
             buffer = ResponseCodes.CAN_ASSOCIATE.toString().getBytes();
         }
@@ -196,6 +203,7 @@ public class UDPServer extends Thread {
 
         //removes client from the map of clients
         this.clients_map.remove(client_ip);
+        this.alive_clients.remove(client_ip);
     }
 
     private void SendMessage(DatagramPacket packet){
@@ -209,8 +217,72 @@ public class UDPServer extends Thread {
         }
     }
 
+    private void IsClientAlive(){
+        /**
+         * Constantly checks if clients are still alive.
+         *
+         */
+        while(true){
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            for (Map.Entry<InetAddress, Integer> entry : this.clients_map.entrySet()) {
+
+                if (this.alive_clients.get(entry.getKey()) > 3) {
+                    /**
+                     * If value of client IP bigger than 3 in alive_clients map,
+                     * means that the client does not answer for more than 15 seconds,
+                     * and it will be considered dead, and hence removed from the the server.
+                     * All the other clients will be warned as well.
+                     */
+                    this.alive_clients.remove(entry.getKey());
+                    this.clients_map.remove(entry.getKey());
+                    this.HandleDISCONNECTRequest(entry.getKey(), entry.getValue());
+
+                } else {
+                    int new_value = 1 + entry.getValue();
+                    this.alive_clients.put(entry.getKey(), new_value);
+                    byte[] buffer = Requests.IS_ALIVE.toString().getBytes();
+                    DatagramPacket packet = new DatagramPacket(buffer,
+                                                                buffer.length,
+                                                                entry.getKey(),
+                                                                entry.getValue());
+                    this.SendMessage(packet);
+                }
+            }
+
+        }
+    }
+
+    private void HandleYESALIVEResponse(InetAddress client_ip){
+        /**
+         * Decrements the value of client_ip in this.alive_clients.
+         * The decrementation makes sure that the server knows the client is alive.
+         * Please, see the method: IsClientAlive for more details.
+         */
+        int new_value = this.alive_clients.get(client_ip) - 1;
+        this.alive_clients.put(client_ip, new_value);
+    }
+
     @Override
     public void run() {
+
+        /**
+         * Constantly checks if clients are alive, in
+         * a separated thread.
+         */
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                IsClientAlive();
+            }
+        });
+        thread1.start();
+
         /**
          * Constantly gets input from the clients(Aquariums).
          */
