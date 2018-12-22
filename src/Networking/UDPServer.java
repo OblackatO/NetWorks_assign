@@ -180,10 +180,6 @@ public class UDPServer extends Thread {
          * Handles a dissociation request, and tells others clients that some
          * client is going to be disconnected.
          */
-        byte[] buffer = ResponseCodes.CAN_DISCONNECT.toString().getBytes();
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length, client_ip, port);
-        this.SendMessage(packet);
-
         Client client = null;
         for(Client client_sec: this.clients){
             if((client_sec.ip_address.toString().equals(client_ip.toString())) &&
@@ -196,8 +192,8 @@ public class UDPServer extends Thread {
         message += client.ID + this.TOKEN;
         message += ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
 
-        buffer = message.getBytes();
-        packet = new DatagramPacket(buffer, buffer.length);
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
         for(Client client_sec: this.clients){
 
@@ -213,7 +209,6 @@ public class UDPServer extends Thread {
 
         //removes client from the arraylist of clients
         this.clients.remove(client);
-
         this.CURRENT_CLIENTS--;
     }
 
@@ -241,7 +236,6 @@ public class UDPServer extends Thread {
                 e.printStackTrace();
             }
 
-            System.out.println("Checking fishes..");
             for(Client client: this.clients){
                 /**
                  * If value of total_YESALIVE_ANSWERS is bigger than 3 that

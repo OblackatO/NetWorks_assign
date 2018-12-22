@@ -22,7 +22,7 @@ public class UDPClient extends Thread{
 
     UUID uuid = UUID.randomUUID();
     String clientID = uuid.toString();
-    final String TOKEN = "|";
+    final String TOKEN = "@";
     final int BUFFER_MAX = 100;
 
     //
@@ -100,13 +100,17 @@ public class UDPClient extends Thread{
         /**
          * Asks the server for a disconnection.
          *
-         * @return true if disconnection successful, false otherwise.
+         * @return true after warning the server of the disconnection.
          */
 
-        byte[] buffer = this.ConvertRequests(Requests.DISCONNECT_REQUEST);
-        String message = this.RequestHandler(buffer);
-        return message.contains(ResponseCodes.CAN_DISCONNECT.toString());
-
+        String message = this.clientID + this.TOKEN;
+        message += Requests.DISCONNECT_REQUEST.toString() + this.TOKEN;
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
+                this.serverIP,
+                this.server_port);
+        this.sendDatagram(packet);
+        return true;
     }
 
     private String RequestHandler(byte[] buffer){
@@ -124,7 +128,6 @@ public class UDPClient extends Thread{
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
         return message;
     }
 
