@@ -132,7 +132,10 @@ public class Aquarium extends JPanel{
 
                 MobileItem m_item = (MobileItem) item;
                 m_item.move(random_point);
-                this.aquarium_client.sendFish(item);
+                if(this.aquarium_client != null){
+                    this.aquarium_client.sendFish(item);
+                }
+
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {

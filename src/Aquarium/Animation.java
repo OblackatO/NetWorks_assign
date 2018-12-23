@@ -38,6 +38,7 @@ public class Animation extends JFrame {
             //it will not send its items'positions anymore.
             if(this.aquarium.getUDPClient().DISCONNECTRequest()){
                 System.out.println("[>]Disconnection from the server successful.");
+                System.exit(0);
             }else{
                 System.out.println("[>]A problem occurred, while disconnecting from the server..");
             }

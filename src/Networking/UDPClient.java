@@ -95,20 +95,22 @@ public class UDPClient extends Thread{
         }
     }
 
+    /**
+     * Warns the server it is going to disconnect.
+     * Thens closes the socket used for datagram transfer.
+     *
+     * @return true after warning the server of the disconnection.
+     */
     public boolean DISCONNECTRequest(){
-        /**
-         * Warns the server it is going to disconnect.
-         *
-         * @return true after warning the server of the disconnection.
-         */
 
-        String message = this.clientID + this.TOKEN;
-        message += Requests.DISCONNECT_REQUEST.toString() + this.TOKEN;
+        String message = Requests.DISCONNECT_REQUEST.toString() + this.TOKEN;
+        message += this.clientID + this.TOKEN;
         byte[] buffer = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
                 this.serverIP,
                 this.server_port);
         this.sendDatagram(packet);
+        this.client.close();
         return true;
     }
 
@@ -168,23 +170,19 @@ public class UDPClient extends Thread{
          * calls the handler for that message.
          */
         DatagramPacket packet = receiveDatagram();
-
-        //Only process packets recieved from the server
-        if(packet.getAddress() == serverIP) {
+        //Only process packets received from the server
+        if(packet.getAddress().equals(serverIP)) {
             String message = null;
             Thread thread = null;
-            try {
-                message = new String(packet.getData(), 0, packet.getLength(), "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            if (message.contains(Requests.POSITIONS_REQUEST.toString())) {
 
+            message = new String(packet.getData(), 0, packet.getLength());
+
+            if (message.contains(Requests.POSITIONS_REQUEST.toString())) {
+                System.out.print("Packet is a position request");
                 String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        System.out.println("Received Fish.");
                         aquarium.updateExternalFish(tokenizedMessage[1],
                                                     tokenizedMessage[2],
                                                     Integer.parseInt(tokenizedMessage[3]),
@@ -192,16 +190,28 @@ public class UDPClient extends Thread{
                     }
                 });
             }else if (message.contains(ResponseCodes.DISCONNECTED.toString())) {
+                System.out.print("Packet is a disconnected response.");
                 String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        //TODO handle disconnected responses
                         aquarium.deleteExtFishFrom(tokenizedMessage[1]);
                     }
                 });
+            }else if (message.contains(Requests.IS_ALIVE.toString())) {
+                System.out.print("Packet is a IS_ALIVE request.");
+                thread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        handleIS_ALIVERequest();
+                    }
+                });
             }
-            thread.start();
+            if (thread != null) {
+                thread.start();
+                System.out.print(" Processing it.");
+            }
+            System.out.println();
 
         }
 
@@ -227,6 +237,21 @@ public class UDPClient extends Thread{
                     this.server_port);
             sendDatagram(packet);
         }
+    }
+
+    /**
+     * Handles response to a IS_Alive request from the server.
+     *
+     */
+    private void handleIS_ALIVERequest(){
+
+        String message = ResponseCodes.YES_ALIVE.toString() + this.TOKEN;
+        message += this.clientID + this.TOKEN;
+        byte[] buffer = message.getBytes();
+        DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
+                this.serverIP,
+                this.server_port);
+        this.sendDatagram(packet);
     }
 
     @Override

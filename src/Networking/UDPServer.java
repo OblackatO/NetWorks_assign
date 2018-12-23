@@ -98,10 +98,22 @@ public class UDPServer extends Thread {
         }else if(message.contains(Requests.DISCONNECT_REQUEST.toString())){
 
             String[] message_splitted = message.split(this.TOKEN);
+            System.out.println("Disconnect request recieved.");
             Thread thread1 = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    HandleDISCONNECTRequest(client_ip, message_splitted[0], client_port);
+                    HandleDISCONNECTRequest(client_ip, message_splitted[1], client_port);
+                }
+            });
+            thread1.start();
+
+        }else if(message.contains(ResponseCodes.YES_ALIVE.toString())){
+
+            String[] message_splitted = message.split(this.TOKEN);
+            Thread thread1 = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    HandleYESALIVEResponse(message_splitted[1]);
                 }
             });
             thread1.start();
@@ -179,35 +191,40 @@ public class UDPServer extends Thread {
          * Handles a dissociation request, and tells others clients that some
          * client is going to be disconnected.
          */
-        Client client = null;
+        Client disconnectingClient = null;
+        String message = null;
         for(Client client_sec: this.clients){
-            if((client_sec.ip_address.toString().equals(client_ip.toString())) &&
-                client_sec.ID.equals(clientID)){
-                    client = client_sec;
+            if(client_sec.ID.equals(clientID)){
+                    disconnectingClient = client_sec;
+                message = ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
+                message += disconnectingClient.ID + this.TOKEN;
                     break;
             }
         }
-        String message = ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
-        message += client.ID + this.TOKEN;
 
-        byte[] buffer = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+        if(disconnectingClient != null){
 
-        for(Client client_sec: this.clients){
+            byte[] buffer = message.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 
-            if(client_sec.ip_address.toString().equals(client_ip.toString())){
-                continue;
+            for(Client client_sec: this.clients){
+
+                if(client_sec == disconnectingClient){
+                    //Skips the client sending the DISCONNECT Request
+                    continue;
+                }
+
+                packet.setAddress(client_sec.ip_address);
+                packet.setPort(client_sec.port);
+
+                this.SendMessage(packet);
             }
 
-            packet.setAddress(client.ip_address);
-            packet.setPort(client.port);
-
-            this.SendMessage(packet);
+            //removes client from the arraylist of clients
+            this.clients.remove(disconnectingClient);
+            Client.ALL_IDs.remove(disconnectingClient.ID);
+            this.CURRENT_CLIENTS--;
         }
-
-        //removes client from the arraylist of clients
-        this.clients.remove(client);
-        this.CURRENT_CLIENTS--;
     }
 
     private void SendMessage(DatagramPacket packet){
@@ -236,13 +253,14 @@ public class UDPServer extends Thread {
 
             for(Client client: this.clients){
                 /**
-                 * If value of total_YESALIVE_ANSWERS is bigger than 3 that
+                 * If value of total_YESALIVE_ANSWERS is bigger than 2 that
                  * means that the client does not answer for +/- 15 seconds,
                  * and it will be considered dead, and hence removed from the the server.
                  * All the other clients will be warned as well.
                  */
-                if(client.total_YESALIVE_ANSWERS > 3){
+                if(client.total_YESALIVE_ANSWERS > 2){
                     this.clients.remove(client);
+                    //TODO send DISCONNECT messages to other clients
                 }else{
                     client.total_YESALIVE_ANSWERS++;
                     byte[] buffer = Requests.IS_ALIVE.toString().getBytes();
@@ -256,16 +274,16 @@ public class UDPServer extends Thread {
         }
     }
 
-    private void HandleYESALIVEResponse(InetAddress client_ip){
+    private void HandleYESALIVEResponse(String clientID){
         /**
-         * Decrements the value of total_YESALIVE_ANSWERS
-         * The decrementation makes sure that the server knows the client is alive.
+         * Resets the value of total_YESALIVE_ANSWERS
+         * The variable makes sure that the server knows the client is alive.
          * Please, see the method: IsClientAlive() for more details.
          */
 
         for(Client client: this.clients){
-            if(client.ip_address.toString().equals(client_ip.toString())){
-                client.total_YESALIVE_ANSWERS--;
+            if(client.ID.equals(clientID)){
+                client.total_YESALIVE_ANSWERS = 0;
                 break;
             }
         }

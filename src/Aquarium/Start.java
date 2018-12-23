@@ -6,21 +6,16 @@ import java.net.UnknownHostException;
 public class Start {
 
     public static String SERVER_IP = null;
-    public static int SERVER_PORT = 0;
+    public static int SERVER_PORT = 8000;
 
     public static void main(String [] args){
 
-        //UNCOMMENT ME TO BE THE SERVER
-        try {
-            UDPServer server = new UDPServer(Start.SERVER_PORT,Start.SERVER_IP);
-            server.start();
-        } catch (UnknownHostException e) {
-            System.out.println("[>]An error occurred while init the server.");
-            e.printStackTrace();
+        if (args.length == 2) {
+
+            SERVER_IP = args[0];
+            SERVER_PORT = Integer.parseInt(args[1]);
         }
 
-
-        //UNCOMMENT ME TO BE A CLIENT
         System.out.println("[>]Creating animation.");
         Animation animation_window = new Animation();
         animation_window.setSize(Aquarium.getcoordinateX(),Aquarium.getcoordinateY());
