@@ -15,14 +15,13 @@ public class UDPServer extends Thread {
     int CURRENT_CLIENTS = 0;
     DatagramSocket server;
 
-    //The data type ConcurrentSkipListSet avoids problems resulting in
+    //The collection ConcurrentSkipListSet avoids problems resulting in
     //concurrent threads accessing clients, at the same time. This behavior
     // is needed here.
     ConcurrentSkipListSet<Client> clients;
 
     public UDPServer(int port, String ip_address) throws UnknownHostException {
 
-        //Inits arraylist that contains info about the clients.
         this.clients = new ConcurrentSkipListSet<Client>();
 
         //Defines default port if needed.

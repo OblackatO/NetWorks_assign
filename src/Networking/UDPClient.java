@@ -11,9 +11,9 @@ import java.util.UUID;
 
 public class UDPClient extends Thread{
 
-    /** Class responsible for handling for requesting all the positions
-     * os all aquariums that are running. Furthermore, this class is also
-     * responsible to update the position of the items of each Aquarium.
+    /** Class responsible for handling and requesting all the positions
+     * of all aquariums that are running. Furthermore, this class is also
+     * responsible to update the positions of the items of each Aquarium.
      */
 
     int server_port;
@@ -47,7 +47,7 @@ public class UDPClient extends Thread{
     }
 
     private void HELORequest() {
-        /**Sends Discovery Requests to check if the
+        /**Sends HELO Request to check if the
          * server is up and running.
          *
          * @return false if the server is not up and running,
@@ -64,6 +64,12 @@ public class UDPClient extends Thread{
     }
 
     private void ASSOCIATIONRequest() {
+        /**
+         * Tries to assiciate with the server, so the client can start 
+         * sending the positions of its items. If the server is full, the client 
+         * will try to reconnect after 10 seconds, doing so consecutively either 
+         * until the server accepts him, or the user closes the aquarium.
+         */
         String message = Requests.ASSOCIATION_REQUEST.toString()+this.TOKEN;
         message += this.clientID+this.TOKEN;
 
@@ -78,7 +84,7 @@ public class UDPClient extends Thread{
                 System.out.println("[>]Server reached maximum number of connections");
                 System.out.println("[>]Trying again in a few seconds.");
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(10000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -89,12 +95,9 @@ public class UDPClient extends Thread{
         }
     }
 
-
-    //TODO Shouldn't send and recieve in the same method
-
     public boolean DISCONNECTRequest(){
         /**
-         * Asks the server for a disconnection.
+         * Warns the server it is going to disconnect.
          *
          * @return true after warning the server of the disconnection.
          */
@@ -136,7 +139,7 @@ public class UDPClient extends Thread{
     }
 
     private DatagramPacket receiveDatagram(){
-        //Tries to send packet
+        //Tries to receive packet
         byte[] buffer = new byte[512];
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
         try {
@@ -149,20 +152,21 @@ public class UDPClient extends Thread{
 
     private byte[] ConvertRequests(Requests request){
         /**
-         * Converts an instance of Requests to bytes, so it can be
-         * properly sent over UDP.
+         * Converts an instance of Requests to bytes.
          */
         return request.toString().getBytes();
     }
+
 
     /*
     All methods handling received messages come here
      */
 
-    /**Reads all datagrams recieved by the client.
-     * It then checks for the kind of message received and calls the handler for that message
-     */
     private void messageHandler(){
+        /**Reads all datagrams recieved by the client.
+         * It then checks for the kind of message received and 
+         * calls the handler for that message.
+         */
         DatagramPacket packet = receiveDatagram();
 
         //Only process packets recieved from the server
