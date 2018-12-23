@@ -28,6 +28,10 @@ public abstract class MobileItem extends AquariumItem implements Mobile {
         super.setPosition(random_point);
     }
 
+    public  MobileItem(String itemID){
+        super(itemID, fishImage);
+    }
+
     @Override
     public boolean move(Point destination){
         /**

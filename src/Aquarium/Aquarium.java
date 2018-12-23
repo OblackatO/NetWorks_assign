@@ -7,7 +7,6 @@ import Networking.UDPClient;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -15,12 +14,13 @@ import java.util.Collection;
 
 public class Aquarium extends JPanel{
 
-    Collection<AquariumItem> items;
+    private Collection<AquariumItem> items;
+    private Collection<OwnedItems> externalItems;
     final private int NB_STONES = 20;
     final private int NB_SEAWEED = 15;
     final private int NB_FISHES = 5;
 
-    Time threadX;
+    private Time threadX;
 
     //Defines size of aquarium
     private static final int X_Coordinate = 800;
@@ -34,11 +34,12 @@ public class Aquarium extends JPanel{
 
     public Aquarium(){
 
+        final Aquarium aquarium = this;
         Thread UDPClient_thread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
-                    aquarium_client = new UDPClient(Start.SERVER_PORT, Start.SERVER_IP);
+                    aquarium_client = new UDPClient(Start.SERVER_PORT, Start.SERVER_IP, aquarium);
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 } catch (SocketException e) {
@@ -49,6 +50,7 @@ public class Aquarium extends JPanel{
         UDPClient_thread.start();
 
         this.items = new ArrayList<AquariumItem>();
+        this.externalItems = new ArrayList<OwnedItems>();
         this.setBackground(Color.BLUE);
 
         StoneFactory stone_factory = new StoneFactory();
@@ -158,6 +160,9 @@ public class Aquarium extends JPanel{
         for (AquariumItem item : items) {
             item.draw(this.gContext);
         }
+        for (OwnedItems extItem : externalItems) {
+            extItem.item.draw(this.gContext);
+        }
         this.repaint();
     }
 
@@ -176,5 +181,36 @@ public class Aquarium extends JPanel{
     }
 
     public UDPClient getUDPClient(){ return this.aquarium_client; }
+
+    public void updateExternalFish(String clientID, String itemID, int posX, int posY){
+        if (!isExtFishPresent(itemID)) {
+            OwnedItems newFish = new OwnedItems();
+            newFish.ownerID = clientID;
+            newFish.item = new Fish(itemID);
+            newFish.item.setPosition(new Point(posX, posY));
+
+            externalItems.add(newFish);
+        } else {
+            OwnedItems fishToUpdate = null;
+            for (OwnedItems oneItem: this.externalItems) {
+                if( oneItem.item.getItemID().equals(itemID) ){
+                    fishToUpdate = oneItem;
+                }
+            }
+            fishToUpdate.item.setPosition(new Point(posX, posY));
+        }
+    }
+
+    private boolean isExtFishPresent(String itemID){
+        boolean isPresent = false;
+
+        for (OwnedItems oneItem: this.externalItems) {
+            if( oneItem.item.getItemID().equals(itemID) ){
+                isPresent = true;
+            }
+        }
+
+        return isPresent;
+    }
 
 }
