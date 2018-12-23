@@ -177,7 +177,6 @@ public class UDPClient extends Thread{
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
-                        //TODO handle positions requests
                         System.out.println("Received Fish.");
                         aquarium.updateExternalFish(tokenizedMessage[1],
                                                     tokenizedMessage[2],
@@ -186,23 +185,15 @@ public class UDPClient extends Thread{
                     }
                 });
             }else if (message.contains(ResponseCodes.DISCONNECTED.toString())) {
-
+                String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         //TODO handle disconnected responses
-                    }
-                });
-            }else if (message.contains(Requests.DISCONNECT_REQUEST.toString())) {
-
-                thread = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        //TODO handle disconnected request ???
+                        aquarium.deleteExtFishFrom(tokenizedMessage[1]);
                     }
                 });
             }
-
             thread.start();
 
         }

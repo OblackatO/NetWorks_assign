@@ -180,6 +180,7 @@ public class UDPServer extends Thread {
          * Handles a dissociation request, and tells others clients that some
          * client is going to be disconnected.
          */
+        //TODO is this still needed?
         byte[] buffer = ResponseCodes.CAN_DISCONNECT.toString().getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length, client_ip, port);
         this.SendMessage(packet);
@@ -192,9 +193,8 @@ public class UDPServer extends Thread {
                     break;
             }
         }
-        String message = client_ip.toString() + this.TOKEN;
+        String message = ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
         message += client.ID + this.TOKEN;
-        message += ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
 
         buffer = message.getBytes();
         packet = new DatagramPacket(buffer, buffer.length);
