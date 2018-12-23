@@ -13,8 +13,7 @@ public abstract class AquariumItem {
     protected int height;
     Image image;
 
-    UUID uuid = UUID.randomUUID();
-    String ItemID = uuid.toString();
+    String ItemID;
 
     public AquariumItem(int min_width, int max_width, Image image){
         /**
@@ -25,6 +24,14 @@ public abstract class AquariumItem {
         this.width = RandomNumber.randomValue(min_width, max_width);
         this.image = image;
         this.height = (int) (0.33 * width);
+        this.ItemID = UUID.randomUUID().toString();
+    }
+
+    public AquariumItem(String itemID, Image image){
+        this.width = -1;
+        this.image = image;
+        this.height = (int) (0.33 * this.width);
+        this.ItemID = itemID;
     }
 
     public void setPosition(Point p){

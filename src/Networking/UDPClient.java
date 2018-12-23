@@ -1,5 +1,6 @@
 package Networking;
 
+import Aquarium.Aquarium;
 import Aquarium.Items.AquariumItem;
 
 import java.io.IOException;
@@ -19,19 +20,16 @@ public class UDPClient extends Thread{
     InetAddress serverIP;
     DatagramSocket client;
     boolean isassociated = false;
+    final Aquarium aquarium;
 
     UUID uuid = UUID.randomUUID();
     String clientID = uuid.toString();
-    final String TOKEN = "|";
+    final String TOKEN = "@";
     final int BUFFER_MAX = 100;
 
-    //
-    DatagramPacket[] dataBuffer;
-    int in;
-    int out;
 
 
-    public UDPClient(int port, String ServerIP) throws UnknownHostException, SocketException{
+    public UDPClient(int port, String ServerIP, Aquarium aquarium) throws UnknownHostException, SocketException{
 
         if(port == 0){
             this.server_port = 8080;
@@ -42,9 +40,7 @@ public class UDPClient extends Thread{
         this.client = new DatagramSocket();
         this.serverIP = InetAddress.getByName(ServerIP);
 
-        DatagramPacket[] queuBuffer = new DatagramPacket[this.BUFFER_MAX];
-        in = 0;
-        out = 0;
+        this.aquarium = aquarium;
 
         this.start();
 
@@ -115,7 +111,6 @@ public class UDPClient extends Thread{
                 this.server_port);
         //Tries to send message
         sendDatagram(packet);
-        System.out.println("Trying to receive message.");
         packet = receiveDatagram();
         String message = null;
         try {
@@ -178,10 +173,16 @@ public class UDPClient extends Thread{
             }
             if (message.contains(Requests.POSITIONS_REQUEST.toString())) {
 
+                String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
                         //TODO handle positions requests
+                        System.out.println("Received Fish.");
+                        aquarium.updateExternalFish(tokenizedMessage[1],
+                                                    tokenizedMessage[2],
+                                                    Integer.parseInt(tokenizedMessage[3]),
+                                                    Integer.parseInt(tokenizedMessage[4]));
                     }
                 });
             }else if (message.contains(ResponseCodes.DISCONNECTED.toString())) {
@@ -213,42 +214,22 @@ public class UDPClient extends Thread{
     All methods handling sent messages come here
      */
     public void sendFish(AquariumItem item){
-        String message;
+        if (isassociated) {
+            String message;
 
-        message = Requests.POSITIONS_REQUEST.toString()+this.TOKEN;
-        message += this.clientID+this.TOKEN;
-        message += item.getItemID()+this.TOKEN;
-        message += item.getPosition().x+this.TOKEN;
-        message += item.getPosition().y+this.TOKEN;
+            message = Requests.POSITIONS_REQUEST.toString() + this.TOKEN;
+            message += this.clientID + this.TOKEN;
+            message += item.getItemID() + this.TOKEN;
+            message += item.getPosition().x + this.TOKEN;
+            message += item.getPosition().y + this.TOKEN;
 
-        byte[] buffer = message.getBytes();
-        DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
-                this.serverIP,
-                this.server_port);
-        sendDatagram(packet);
+            byte[] buffer = message.getBytes();
+            DatagramPacket packet = new DatagramPacket(buffer, buffer.length,
+                    this.serverIP,
+                    this.server_port);
+            sendDatagram(packet);
+        }
     }
-
-
-
-/*    public void queueBuffer(AquariumItem item) {
-
-        String message;
-
-        message = this.clientID+this.TOKEN;
-        message += item.getItemID()+this.TOKEN;
-        message += item.getPosition().x+this.TOKEN;
-        message += item.getPosition().y+this.TOKEN;
-
-
-
-        byte[] buffer = message.getBytes();
-        dataBuffer[in] = new DatagramPacket(buffer, buffer.length,
-                this.serverIP,
-                this.server_port);
-        in = (++in) % this.BUFFER_MAX;
-
-    }*/
-
 
     @Override
     public void run() {

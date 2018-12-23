@@ -11,6 +11,9 @@ public class Fish extends MobileItem{
     public Fish() {
         super(MIN_FISH_WIDTH, MAX_FISH_WIDTH);
     }
+    public Fish(String itemID) {
+        super(itemID);
+    }
 
 
     @Override

@@ -6,7 +6,7 @@ import java.awt.event.WindowEvent;
 
 public class Animation extends JFrame {
 
-    Aquarium aquarium;
+    private final Aquarium aquarium;
 
     public Animation(){
 
