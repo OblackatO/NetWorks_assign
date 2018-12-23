@@ -44,15 +44,15 @@ public abstract class MobileItem extends AquariumItem implements Mobile {
         int direction_coordinate_x = destination.x - super.position.x;
         int direction_coordinate_y = destination.y - super.position.y;
 
-        double direction = (double) Math.atan2(direction_coordinate_x, direction_coordinate_y);
+        double direction = (double) Math.atan2(-direction_coordinate_y, direction_coordinate_x);
 
         double width_arg = this.MAX_WIDTH/super.width;
         double speed = 3*width_arg;
 
-        int cor_x = (int) (speed * Math.cos(direction));
-        int cor_y = (int) (speed * Math.sin(direction));
-        Point p = this.position;
-        p.translate(cor_x, cor_y);
+        double cor_x = speed * Math.cos(direction);
+        double cor_y = speed * Math.sin(direction);
+        Point p = new Point();
+        p.setLocation(this.position.getX()+cor_x, this.position.getY()+cor_y);
         boolean stays_in_aquarium = ((p.getX()) >= 0) &&
                 ((p.getX()) <= Aquarium.getcoordinateX() - this.width) &&
                 ((p.getY()) >= 0) &&

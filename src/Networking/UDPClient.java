@@ -178,7 +178,6 @@ public class UDPClient extends Thread{
             message = new String(packet.getData(), 0, packet.getLength());
 
             if (message.contains(Requests.POSITIONS_REQUEST.toString())) {
-                System.out.print("Packet is a position request");
                 String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
@@ -190,7 +189,6 @@ public class UDPClient extends Thread{
                     }
                 });
             }else if (message.contains(ResponseCodes.DISCONNECTED.toString())) {
-                System.out.print("Packet is a disconnected response.");
                 String[] tokenizedMessage = message.split(this.TOKEN);
                 thread = new Thread(new Runnable() {
                     @Override
@@ -199,7 +197,6 @@ public class UDPClient extends Thread{
                     }
                 });
             }else if (message.contains(Requests.IS_ALIVE.toString())) {
-                System.out.print("Packet is a IS_ALIVE request.");
                 thread = new Thread(new Runnable() {
                     @Override
                     public void run() {
@@ -209,9 +206,7 @@ public class UDPClient extends Thread{
             }
             if (thread != null) {
                 thread.start();
-                System.out.print(" Processing it.");
             }
-            System.out.println();
 
         }
 
