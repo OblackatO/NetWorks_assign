@@ -213,4 +213,12 @@ public class Aquarium extends JPanel{
         return isPresent;
     }
 
+    public void deleteExtFishFrom(String clientID) {
+        for (OwnedItems oneItem: this.externalItems) {
+            if( oneItem.item.getItemID().equals(clientID) ){
+                externalItems.remove(oneItem);
+            }
+        }
+    }
+
 }

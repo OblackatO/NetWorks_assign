@@ -188,9 +188,8 @@ public class UDPServer extends Thread {
                     break;
             }
         }
-        String message = client_ip.toString() + this.TOKEN;
+        String message = ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
         message += client.ID + this.TOKEN;
-        message += ResponseCodes.DISCONNECTED.toString() + this.TOKEN;
 
         byte[] buffer = message.getBytes();
         DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
