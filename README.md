@@ -25,13 +25,13 @@ if yes the client will send the server an association request. If the client can
 
 For performance reasons, and also for logical reasons, multi-threading is used in both the client and server sides.  
 All the requests and responses exchanged between the clients and the server can be found in the Requests.java and in ResponseCodes.java.
-Each aquarium can be seen as a client. Each client is considered by the server has a Client object that can be found in Client.java    
+Each aquarium can be seen as a client. Each client is considered by the server as a Client object that can be found in Client.java    
 
-Most of the functions have a description.    
+Most of the functions of the Client and Server have a description.    
 
 ### Authors     
 Gomes Pedro -- 017066611B  
-Esteves Tiago --
+Esteves Tiago -- 0170773724
 
 ### Copyright   
 Copyright © 2018 Gomes Pedro and Tiago Esteves. All Rights Reserved.
