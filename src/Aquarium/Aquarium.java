@@ -50,6 +50,7 @@ public class Aquarium extends JPanel{
         UDPClient_thread.start();
 
         this.items = new ArrayList<AquariumItem>();
+        this.externalItems = new ArrayList<OwnedItems>();
         this.setBackground(Color.BLUE);
 
         StoneFactory stone_factory = new StoneFactory();
