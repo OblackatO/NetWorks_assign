@@ -228,7 +228,7 @@ public class Aquarium extends JPanel{
 
     public void deleteExtFishFrom(String clientID) {
         for (OwnedItems oneItem: this.externalItems) {
-            if( oneItem.item.getItemID().equals(clientID) ){
+            if( oneItem.ownerID.equals(clientID) ){
                 externalItems.remove(oneItem);
             }
         }
