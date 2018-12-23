@@ -160,11 +160,11 @@ public class Aquarium extends JPanel{
         }
         this.gContext.setColor(Color.BLUE);
         this.gContext.fillRect(0, 0, Aquarium.X_Coordinate, Aquarium.Y_Coordinate);
-        for (AquariumItem item : items) {
-            item.draw(this.gContext);
-        }
         for (OwnedItems extItem : externalItems) {
             extItem.item.draw(this.gContext);
+        }
+        for (AquariumItem item : items) {
+            item.draw(this.gContext);
         }
         this.repaint();
     }

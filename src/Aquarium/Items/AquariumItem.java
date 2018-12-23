@@ -28,7 +28,8 @@ public abstract class AquariumItem {
     }
 
     public AquariumItem(String itemID, Image image){
-        this.width = -1;
+        //TODO get width from other clients?
+        this.width = 200;
         this.image = image;
         this.height = (int) (0.33 * this.width);
         this.ItemID = itemID;

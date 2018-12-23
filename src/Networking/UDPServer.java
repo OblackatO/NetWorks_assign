@@ -171,10 +171,11 @@ public class UDPServer extends Thread {
          * Sends the position of some items from some client, to all the other clients
          * except the one sending its own items' positions.
          */
-
+        String message = new String(positions.getData(), 0, positions.getLength());
+        String[] message_splitted = message.split(this.TOKEN);
         for(Client client: this.clients){
 
-            if(client.ip_address.toString().equals(client_ip.toString())){
+            if(client.ID.equals(message_splitted[1])){
                 //Skips the client sending the positions
                 continue;
             }
